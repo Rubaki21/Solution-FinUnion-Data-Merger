@@ -1,0 +1,141 @@
+erDiagram
+    FACT_TRANSACTION {
+        bigint transaction_fact_sk PK
+        string transaction_leg_id UK
+        string enterprise_transaction_id
+        bigint party_sk FK
+        bigint account_sk FK
+        bigint agreement_sk FK
+        bigint product_sk FK
+        bigint counterparty_sk FK
+        int event_date_sk FK
+        int posting_date_sk FK
+        int event_time_sk FK
+        int channel_sk FK
+        int transaction_type_sk FK
+        int currency_sk FK
+        bigint merchant_sk FK
+        int source_system_sk FK
+        decimal original_amount
+        decimal account_amount
+        decimal base_amount
+        decimal fee_amount
+        decimal fx_rate
+        string direction
+        string status_code
+        boolean is_reversal
+        int transaction_count
+    }
+
+    DIM_PARTY {
+        bigint party_sk PK
+        uuid global_party_id
+        string party_type
+        string segment
+        string residency
+        datetime valid_from
+        datetime valid_to
+        boolean is_current
+    }
+
+    DIM_ACCOUNT {
+        bigint account_sk PK
+        uuid global_account_id
+        string source_account_id
+        string account_type
+        string account_status
+        string currency_code
+        datetime valid_from
+        datetime valid_to
+    }
+
+    DIM_AGREEMENT {
+        bigint agreement_sk PK
+        uuid global_agreement_id
+        string agreement_type
+        string agreement_status
+        datetime valid_from
+        datetime valid_to
+    }
+
+    DIM_PRODUCT {
+        bigint product_sk PK
+        uuid global_product_id
+        string product_type
+        string product_family
+        string tariff_version
+        datetime valid_from
+        datetime valid_to
+    }
+
+    DIM_COUNTERPARTY {
+        bigint counterparty_sk PK
+        uuid global_party_id
+        string counterparty_type
+        string country_code
+        string industry_code
+    }
+
+    DIM_DATE {
+        int date_sk PK
+        date calendar_date
+        int year
+        int quarter
+        int month
+        boolean is_business_day
+        date banking_business_date
+    }
+
+    DIM_TIME {
+        int time_sk PK
+        int hour
+        int minute
+        string day_part
+    }
+
+    DIM_CHANNEL {
+        int channel_sk PK
+        string channel_code
+        string channel_group
+        string assisted_flag
+    }
+
+    DIM_TRANSACTION_TYPE {
+        int transaction_type_sk PK
+        string canonical_type_code
+        string transaction_group
+        string financial_scope
+    }
+
+    DIM_CURRENCY {
+        int currency_sk PK
+        string iso_code
+        int minor_units
+    }
+
+    DIM_MERCHANT {
+        bigint merchant_sk PK
+        string merchant_token
+        string mcc
+        string country_code
+    }
+
+    DIM_SOURCE_SYSTEM {
+        int source_system_sk PK
+        string source_system_code
+        string bank_origin
+        string serving_domain
+    }
+
+    DIM_PARTY ||--o{ FACT_TRANSACTION : "party at event time"
+    DIM_ACCOUNT ||--o{ FACT_TRANSACTION : "client account"
+    DIM_AGREEMENT ||--o{ FACT_TRANSACTION : "agreement"
+    DIM_PRODUCT ||--o{ FACT_TRANSACTION : "product version"
+    DIM_COUNTERPARTY ||--o{ FACT_TRANSACTION : "counterparty"
+    DIM_DATE ||--o{ FACT_TRANSACTION : "event and posting date"
+    DIM_TIME ||--o{ FACT_TRANSACTION : "event time"
+    DIM_CHANNEL ||--o{ FACT_TRANSACTION : "channel"
+    DIM_TRANSACTION_TYPE ||--o{ FACT_TRANSACTION : "canonical type"
+    DIM_CURRENCY ||--o{ FACT_TRANSACTION : "original currency"
+    DIM_MERCHANT ||--o{ FACT_TRANSACTION : "merchant"
+    DIM_SOURCE_SYSTEM ||--o{ FACT_TRANSACTION : "lineage source"

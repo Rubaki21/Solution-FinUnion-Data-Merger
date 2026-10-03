@@ -1,0 +1,117 @@
+flowchart LR
+    subgraph CHANNELS["Channels and external producers"]
+        WEB["Web / Mobile"]
+        CC["Contact Center"]
+        PARTNERS["Partners"]
+    end
+
+    subgraph OLTP["Operational systems - systems of record"]
+        CORE["Target Core Banking / Ledger"]
+        CRM["CRM / Customer Case"]
+        CARDS["Card Processing"]
+        LOANS["Loan Platform"]
+        PAY["Payments Platform"]
+        ECM["ECM / Documents"]
+    end
+
+    subgraph MASTER["Master data"]
+        PMDM["Party MDM / Customer Hub"]
+        RMDM["Product Catalog / Reference MDM"]
+    end
+
+    subgraph INTEGRATION["Integration layer"]
+        APIM["API Gateway / Integration Services"]
+        KAFKA[("Kafka-compatible Event Platform")]
+        SCHEMA["Schema Registry"]
+        CDC["CDC / Transactional Outbox"]
+        STREAM["Stream Processing"]
+    end
+
+    subgraph DATA["Analytical data platform"]
+        OBJ[("Object Storage")]
+        RAW[("Iceberg Raw")]
+        STD[("Iceberg Standardized")]
+        CUR[("Iceberg Curated")]
+        TRINO["Trino SQL"]
+        DWH[("Enterprise DWH")]
+        SEM["Semantic Layer"]
+    end
+
+    subgraph ORCH["Data engineering"]
+        AIRFLOW["Airflow"]
+        TRANSFORM["dbt / SQL / Spark"]
+        DQ["Data Quality and Reconciliation"]
+    end
+
+    subgraph CONSUMERS["Consumers"]
+        BI["BI Dashboards"]
+        DS["Risk / Antifraud / Data Science"]
+        REG["Regulatory Reporting"]
+        PROFILE["Customer 360 Read Model"]
+    end
+
+    DATAHUB[("DataHub: Catalog / Glossary / Lineage / Owners")]
+    SECURITY["IAM / KMS / Masking / Audit / DLP"]
+    OBS["Observability / SLO / Cost"]
+
+    WEB -->|"sync commands"| APIM
+    CC -->|"sync commands"| APIM
+    PARTNERS -->|"sync APIs / files"| APIM
+    APIM --> CORE
+    APIM --> CRM
+    APIM --> CARDS
+    APIM --> LOANS
+    APIM --> PAY
+    APIM --> PMDM
+
+    OLTP --> CDC
+    PMDM -->|"golden Party events"| KAFKA
+    RMDM -->|"reference events"| KAFKA
+    CDC --> KAFKA
+    SCHEMA --- KAFKA
+    KAFKA --> STREAM
+    KAFKA -->|"immutable events"| RAW
+    ECM -->|"documents / archives"| OBJ
+    OBJ --> RAW
+
+    RAW --> STD
+    STD --> CUR
+    STREAM --> STD
+    TRANSFORM --> STD
+    TRANSFORM --> CUR
+    AIRFLOW --> TRANSFORM
+    AIRFLOW --> DQ
+    DQ --> DWH
+    DQ --> CUR
+
+    PMDM -->|"golden dimensions"| DWH
+    RMDM -->|"conformed dimensions"| DWH
+    CUR -->|"certified facts / aggregates"| DWH
+    STD -->|"reconciled financial facts"| DWH
+
+    CUR --> TRINO
+    STD --> TRINO
+    DWH --> SEM
+    SEM --> BI
+    DWH --> REG
+    TRINO --> DS
+    CUR --> PROFILE
+    PMDM --> PROFILE
+    OLTP -->|"authorized operational reads"| PROFILE
+
+    OLTP -.->|"schemas / owners"| DATAHUB
+    MASTER -.->|"glossary / match lineage"| DATAHUB
+    KAFKA -.->|"topics / contracts"| DATAHUB
+    AIRFLOW -.->|"job lineage"| DATAHUB
+    TRANSFORM -.->|"column lineage"| DATAHUB
+    DWH -.->|"models / metrics"| DATAHUB
+    CUR -.->|"data products"| DATAHUB
+    BI -.->|"report lineage"| DATAHUB
+
+    SECURITY -.-> OLTP
+    SECURITY -.-> MASTER
+    SECURITY -.-> INTEGRATION
+    SECURITY -.-> DATA
+    OBS -.-> INTEGRATION
+    OBS -.-> DATA
+    OBS -.-> ORCH

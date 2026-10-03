@@ -1,0 +1,180 @@
+erDiagram
+    PARTY {
+        uuid global_party_id PK
+        string party_type
+        string display_name
+        string tax_id
+        string kyc_status
+        datetime valid_from
+        datetime valid_to
+    }
+
+    PARTY_IDENTIFIER {
+        uuid party_identifier_id PK
+        uuid global_party_id FK
+        string source_system
+        string source_record_id
+        string match_status
+        decimal confidence_score
+    }
+
+    PARTY_RELATIONSHIP {
+        uuid relationship_id PK
+        uuid from_party_id FK
+        uuid to_party_id FK
+        string relationship_type
+        datetime valid_from
+        datetime valid_to
+    }
+
+    PRODUCT {
+        uuid global_product_id PK
+        string product_type
+        string product_name
+        string product_version
+        date valid_from
+        date valid_to
+    }
+
+    AGREEMENT {
+        uuid agreement_id PK
+        uuid global_product_id FK
+        string agreement_number
+        string agreement_type
+        string status
+        date signed_at
+    }
+
+    AGREEMENT_PARTY {
+        uuid agreement_id PK,FK
+        uuid global_party_id PK,FK
+        string party_role
+        datetime valid_from
+        datetime valid_to
+    }
+
+    ACCOUNT {
+        uuid account_id PK
+        uuid agreement_id FK
+        string masked_account_number
+        string account_type
+        string currency_code
+        string status
+    }
+
+    CARD {
+        uuid card_id PK
+        uuid agreement_id FK
+        uuid account_id FK
+        uuid holder_party_id FK
+        string pan_token
+        string masked_pan
+        string status
+    }
+
+    LOAN {
+        uuid loan_id PK
+        uuid agreement_id FK
+        uuid settlement_account_id FK
+        decimal original_amount
+        string currency_code
+        string status
+    }
+
+    PAYMENT {
+        uuid payment_id PK
+        uuid payer_party_id FK
+        uuid payee_party_id FK
+        uuid debit_account_id FK
+        uuid credit_account_id FK
+        decimal amount
+        string currency_code
+        string status
+    }
+
+    FINANCIAL_TRANSACTION {
+        uuid transaction_id PK
+        uuid account_id FK
+        uuid payment_id FK
+        string transaction_type
+        decimal amount
+        datetime event_time
+        string status
+    }
+
+    ACCOUNTING_ENTRY {
+        uuid entry_id PK
+        uuid transaction_id FK
+        uuid account_id FK
+        string debit_credit
+        decimal amount
+        date business_date
+    }
+
+    BALANCE_SNAPSHOT {
+        uuid balance_id PK
+        uuid account_id FK
+        string balance_type
+        decimal amount
+        datetime as_of_time
+    }
+
+    CUSTOMER_CASE {
+        uuid case_id PK
+        uuid global_party_id FK
+        uuid agreement_id FK
+        uuid transaction_id FK
+        string case_type
+        string channel
+        string status
+    }
+
+    DOCUMENT {
+        uuid document_id PK
+        string document_type
+        string object_uri
+        string content_hash
+        string security_class
+        datetime created_at
+    }
+
+    DOCUMENT_LINK {
+        uuid document_id PK,FK
+        string object_type PK
+        uuid object_id PK
+        string link_role
+    }
+
+    REFERENCE_VALUE {
+        string reference_set PK
+        string global_code PK
+        string source_system
+        string source_code
+        string display_name
+        date valid_from
+        date valid_to
+    }
+
+    PARTY ||--o{ PARTY_IDENTIFIER : "имеет идентификаторы"
+    PARTY ||--o{ PARTY_RELATIONSHIP : "источник связи"
+    PARTY ||--o{ PARTY_RELATIONSHIP : "назначение связи"
+    PARTY ||--o{ AGREEMENT_PARTY : "участвует"
+    AGREEMENT ||--|{ AGREEMENT_PARTY : "имеет стороны"
+    PRODUCT ||--o{ AGREEMENT : "реализуется договором"
+    AGREEMENT ||--o{ ACCOUNT : "открывает"
+    AGREEMENT ||--o{ CARD : "выпускает"
+    AGREEMENT ||--o| LOAN : "оформляет"
+    ACCOUNT ||--o{ CARD : "обслуживает"
+    PARTY ||--o{ CARD : "держит"
+    ACCOUNT ||--o{ LOAN : "обслуживает расчеты"
+    PARTY ||--o{ PAYMENT : "инициирует или получает"
+    ACCOUNT ||--o{ PAYMENT : "списывает или зачисляет"
+    PAYMENT o|--o{ FINANCIAL_TRANSACTION : "порождает"
+    ACCOUNT ||--o{ FINANCIAL_TRANSACTION : "содержит"
+    FINANCIAL_TRANSACTION ||--|{ ACCOUNTING_ENTRY : "отражается"
+    ACCOUNT ||--o{ ACCOUNTING_ENTRY : "учитывает"
+    ACCOUNT ||--o{ BALANCE_SNAPSHOT : "имеет снимки"
+    PARTY ||--o{ CUSTOMER_CASE : "создает"
+    AGREEMENT o|--o{ CUSTOMER_CASE : "может относиться"
+    FINANCIAL_TRANSACTION o|--o{ CUSTOMER_CASE : "может оспариваться"
+    DOCUMENT ||--|{ DOCUMENT_LINK : "связывается"

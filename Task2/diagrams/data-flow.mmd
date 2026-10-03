@@ -1,0 +1,70 @@
+flowchart LR
+    subgraph FU["FinUnion operational landscape"]
+        FUCRM["CRM FinUnion"]
+        FUCORE["Core Banking FinUnion"]
+        FUCARDS["Card Processing FinUnion"]
+        FULOANS["Loan System FinUnion"]
+    end
+
+    subgraph RB["RetailBank operational landscape"]
+        RBCRM["CRM RetailBank"]
+        RBCORE["Core Banking RetailBank"]
+        RBCARDS["Card Processing RetailBank"]
+        RBLOANS["Loan System RetailBank"]
+    end
+
+    subgraph INTZONE["Interim data platform - 3 months"]
+        INT(("Integration Layer"))
+        MDM[("MDM Customer Hub")]
+        DWH[("Consolidated DWH")]
+        CATALOG[("DataHub / Data Catalog")]
+        BI["Unified BI"]
+    end
+
+    USERS(["Managers / Analysts"])
+    REG(["Regulator"])
+
+    FUCRM -->|"C/U: Party, Agreement draft, Case<br/>async API / CDC"| INT
+    RBCRM -->|"C/U: Party, Agreement draft, Case<br/>async API / CDC"| INT
+
+    FUCORE -->|"C/R/U: Agreement, Account, Payment<br/>Transaction, Entry, Balance / CDC + EOD"| INT
+    RBCORE -->|"C/R/U: Agreement, Account, Payment<br/>Transaction, Entry, Balance / CDC + EOD"| INT
+
+    FUCARDS -->|"C/U: Card, Card transaction<br/>stream + batch reconciliation"| INT
+    RBCARDS -->|"C/U: Card, Card transaction<br/>stream + batch reconciliation"| INT
+
+    FULOANS -->|"C/U: Loan, Schedule, Debt<br/>CDC + EOD snapshot"| INT
+    RBLOANS -->|"C/U: Loan, Schedule, Debt<br/>CDC + EOD snapshot"| INT
+
+    INT -->|"E/V: normalize Party candidates<br/>and source identifiers"| MDM
+    MDM -->|"R: global Party ID, crosswalk<br/>golden attributes, merge/split events"| INT
+
+    INT -->|"U: global Party ID and allowed<br/>golden attributes"| FUCRM
+    INT -->|"U: global Party ID and allowed<br/>golden attributes"| RBCRM
+
+    INT -->|"C/U: validated canonical increments<br/>quarantine invalid records"| DWH
+    MDM -->|"R: golden Party dimension<br/>crosswalk and reference mapping"| DWH
+
+    DWH -->|"A/R: certified marts and metrics"| BI
+    BI -->|"R: dashboards and reports"| USERS
+    DWH -->|"A/R: controlled regulatory extract"| REG
+
+    FUCRM -.->|"C/U/D: metadata, schema, owner"| CATALOG
+    FUCORE -.->|"C/U/D: metadata and lineage"| CATALOG
+    FUCARDS -.->|"C/U/D: metadata and lineage"| CATALOG
+    FULOANS -.->|"C/U/D: metadata and lineage"| CATALOG
+    RBCRM -.->|"C/U/D: metadata, schema, owner"| CATALOG
+    RBCORE -.->|"C/U/D: metadata and lineage"| CATALOG
+    RBCARDS -.->|"C/U/D: metadata and lineage"| CATALOG
+    RBLOANS -.->|"C/U/D: metadata and lineage"| CATALOG
+    INT -.->|"C/U: flow run, contract, lineage, DQ"| CATALOG
+    MDM -.->|"C/U: glossary, rules, match lineage"| CATALOG
+    DWH -.->|"C/U: model, metric, report lineage"| CATALOG
+    USERS -.->|"R: definitions, owners, quality"| CATALOG
+
+    classDef operational fill:#f8f1d4,stroke:#9a7b19,color:#222;
+    classDef platform fill:#dcecf8,stroke:#31698a,color:#222;
+    classDef external fill:#f3f3f3,stroke:#666,color:#222;
+    class FUCRM,FUCORE,FUCARDS,FULOANS,RBCRM,RBCORE,RBCARDS,RBLOANS operational;
+    class INT,MDM,DWH,CATALOG,BI platform;
+    class USERS,REG external;

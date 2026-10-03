@@ -1,0 +1,43 @@
+sequenceDiagram
+    autonumber
+    participant CM as Cutover Manager
+    participant FU as FU DWH / Sources
+    participant RB as RB DWH / Sources
+    participant MDM as MDM / Reference
+    participant TDWH as Target DWH
+    participant DQ as DQ / Reconciliation
+    participant BOARD as Go-No-Go Board
+    participant BI as Unified BI / Reporting
+    participant REG as Regulatory Export
+
+    CM->>FU: Freeze ETL/report configuration
+    CM->>RB: Freeze ETL/report configuration
+    CM->>TDWH: Create restore point and pin release
+
+    FU->>TDWH: Final delta + EOD manifest
+    RB->>TDWH: Final delta + EOD manifest
+    MDM->>TDWH: Golden dimensions + mapping snapshot
+
+    TDWH->>TDWH: Load staging, dimensions and facts
+    TDWH->>DQ: Counts, sums, hashes, entries and balances
+    DQ->>FU: Compare source controls
+    DQ->>RB: Compare source controls
+    DQ->>BOARD: Reconciliation pack and exceptions
+
+    alt All mandatory gates passed
+        BOARD->>CM: GO
+        CM->>BI: Switch datasource, schedules and subscriptions
+        BI->>BI: Role-based smoke tests
+        CM->>REG: Enable certified target export
+        CM->>FU: Keep warm/read-only during fallback window
+        CM->>RB: Keep warm/read-only during fallback window
+        Note over TDWH,BI: Hypercare, daily Finance sign-off and SLO monitoring
+    else Any abort criterion met
+        BOARD->>CM: NO-GO / FALLBACK
+        CM->>BI: Restore legacy datasource and schedules
+        CM->>REG: Keep last approved legacy export route
+        FU->>FU: Catch up legacy reporting
+        RB->>RB: Catch up legacy reporting
+        CM->>TDWH: Preserve snapshot and logs for RCA
+        Note over CM,TDWH: New cutover only after fix and full rehearsal
+    end

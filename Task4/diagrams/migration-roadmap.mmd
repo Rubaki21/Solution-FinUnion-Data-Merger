@@ -1,0 +1,35 @@
+flowchart LR
+    S0["Stage 0<br/>M1<br/>Mobilize and scope"]
+    G0{"Gate 0<br/>Owners / scope / criteria"}
+    S1["Stage 1<br/>M1-M2<br/>Discovery and dependencies"]
+    G1{"Gate 1<br/>Inventory / DQ baseline"}
+    S2["Stage 2<br/>M2-M3<br/>MDM + PostgreSQL DWH MVP"]
+    G2{"Gate 2<br/>3-month outcome"}
+    S3["Stage 3<br/>M3-M6<br/>Kafka / Iceberg / Trino platform"]
+    G3{"Gate 3<br/>NFR / security / replay / DR"}
+    S4["Stage 4<br/>M4-M7<br/>Canonical models and reporting"]
+    G4{"Gate 4<br/>Finance sign-off"}
+    S5["Stage 5<br/>M6-M9<br/>Domain pilots and data products"]
+    G5{"Gate 5<br/>Pilot go/no-go"}
+    S6["Stage 6<br/>M8-M11<br/>Operational product waves"]
+    G6{"Gate 6<br/>Per-wave reconciliation"}
+    S7["Stage 7<br/>M10-M12<br/>Consolidate and decommission"]
+    G7{"Gate 7<br/>BAU / archive / shutdown"}
+
+    S0 --> G0 --> S1 --> G1 --> S2 --> G2
+    G2 --> S3 --> G3
+    G2 --> S4
+    S3 --> S4
+    S4 --> G4 --> S5
+    G3 --> S5
+    S5 --> G5 --> S6 --> G6 --> S7 --> G7
+
+    S1 -.->|"catalog and lineage continue"| S7
+    S2 -.->|"temporary adapters have exit dates"| S7
+    S3 -.->|"platform supports all later waves"| S6
+    S4 -.->|"reporting cutover enables RB DWH retirement"| S7
+
+    classDef stage fill:#dcecf8,stroke:#31698a,color:#222;
+    classDef gate fill:#fff1cc,stroke:#9a7b19,color:#222;
+    class S0,S1,S2,S3,S4,S5,S6,S7 stage;
+    class G0,G1,G2,G3,G4,G5,G6,G7 gate;
